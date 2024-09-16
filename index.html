@@ -1,0 +1,157 @@
+<!doctype html>
+
+<html lang="es">
+
+<head>
+    <title>Ejercicios de API</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous" />
+</head>
+
+<body class="bg-dark">
+    <h3 class="text-center my-5 text-white">Personajes de Rick and Morty API</h3>
+
+    <div id="app" class="container my-5">
+        <div class="row justify-content-center my-3">
+            <div class="col-md-4">
+                <button v-if="informacion.prev !== null" @click="anterior" class="btn btn-warning" :disabled="cargando">
+                    {{ cargando ? 'Cargando...' : 'Anterior' }}
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button @click="obtenerPersonajes" class="btn btn-info" :disabled="cargando">
+                    {{ cargando ? 'Cargando...' : 'Cargar Personajes' }}
+                </button>
+            </div>
+            <div class="col-md-4">
+                <button v-if="informacion.next !== null" @click="siguiente" class="btn btn-warning" :disabled="cargando">
+                    {{ cargando ? 'Cargando...' : 'Siguiente' }}
+                </button>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-3" v-for="item in personajes" @click="mostrarModal(item)" data-bs-toggle="modal"
+                data-bs-target="#staticBackdrop">
+                <div class="card m-1">
+                    <img :src="item.image" class="card-img-top" alt="Img">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.name }}</h5>
+                        <p class="card-text">Descripcion</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+            aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel">{{ personajeSeleccionado?.name }}</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <img :src="personajeSeleccionado?.image" alt="Img" class="img-fluid">
+                        <p>Genero: {{ personajeSeleccionado?.gender }}</p>
+                        <p>Especie: {{ personajeSeleccionado?.species }}</p>
+                        <p>Estado: {{ personajeSeleccionado?.status }}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue
+
+        createApp({
+            setup() {
+                const personajes = ref([]);
+                const informacion = ref({});
+                const cargando = ref(false);
+                const personajeSeleccionado = ref(null);
+
+                onMounted(() => {
+                    obtenerPersonajes();
+                });
+
+                const obtenerPersonajes = async () => {
+                    cargando.value = true;
+                    try {
+                        const { data } = await axios.get('https://rickandmortyapi.com/api/character');
+                        console.log(data);
+                        personajes.value = data.results;
+                        console.log(personajes.value);
+                        informacion.value = data.info;
+                    } catch (error) {
+                        console.error(error);
+                    } finally {
+                        cargando.value = false;
+                    }
+                }
+
+                const anterior = async () => {
+                    cargando.value = true;
+                    try {
+                        const { data } = await axios.get(informacion.value.prev);
+                        console.log(data);
+                        personajes.value = data.results;
+                        informacion.value = data.info;
+                    } catch (error) {
+                        console.error(error);
+                    } finally {
+                        cargando.value = false;
+                    }
+                }
+
+                const siguiente = async () => {
+                    cargando.value = true;
+                    try {
+                        const { data } = await axios.get(informacion.value.next);
+                        console.log(data);
+                        personajes.value = data.results;
+                        informacion.value = data.info;
+                    } catch (error) {
+                        console.error(error);
+                    } finally {
+                        cargando.value = false;
+                    }
+                }
+
+                const mostrarModal = (item) => {
+                    personajeSeleccionado.value = item;
+                    console.log('Mostrando modal para:', item.name);
+                }
+
+                return {
+                    personajes,
+                    informacion,
+                    cargando,
+                    personajeSeleccionado,
+                    obtenerPersonajes,
+                    siguiente,
+                    anterior,
+                    mostrarModal
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+
+</html>
